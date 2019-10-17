@@ -24,7 +24,7 @@ fn download(object_path: &str, output_path: &str) -> String {
         .output()
         .expect("aws download failed");
 
-    str::from_utf8(&result.stdout).expect("output didn't parse").to_string()
+    dbg!(str::from_utf8(&result.stdout).expect("output didn't parse").to_string());
 }
 
 fn append_folder(path: &mut String, folder_name: String) {
@@ -63,11 +63,6 @@ fn most_recent_file_path(product: &str) -> String {
     newest_output
 }
 
-fn test_location() -> PathBuf {
-    let mnf_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap();
-    Path::new(&mnf_dir).join("test.nc")
-}
-
 fn extract_channel(file: &netcdf::File, channel_name: &str) -> Array2::<i16> {
     file.root().variables()[channel_name].values::<i16>(None, None).unwrap().into_dimensionality::<Ix2>().unwrap()
 }
@@ -94,8 +89,8 @@ fn data_to_image(arr: Array3<u8>) -> RgbImage {
         .expect("container should have the right size for the image dimensions")
 }
 
-fn main() {
-    let file = netcdf::File::open(&test_location()).unwrap();
+fn build_truecolor_image(data_path: PathBuf, relative_out: &str) {
+    let file = netcdf::File::open(&data_path).unwrap();
     let r = reproject(&extract_channel(&file, "CMI_C02"));
     println!("reprojected r");
     let g = reproject(&extract_channel(&file, "CMI_C03"));
@@ -108,5 +103,14 @@ fn main() {
     let image_data = stack(Axis(2), &[prepare_channel(r).view(), prepare_channel(corrected_g).view(), prepare_channel(b).view()]).unwrap();
     println!("stacked channels");
     let image = data_to_image(image_data);
-    image.save("out.jpg");
+    image.save(relative_out);
+}
+
+fn main() {
+    download(&most_recent_file_path("noaa-goes16/ABI-L2-MCMIPF"), "~/output/current.nc");
+    let mut output_path = PathBuf::new();
+    output_path.push("~");
+    output_path.push("output");
+    output_path.push("current.nc");
+    build_truecolor_image(output_path, "~/output/current.jpg");
 }
