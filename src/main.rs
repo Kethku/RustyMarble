@@ -18,7 +18,7 @@ fn ls(path: &str) -> Vec<String> {
     output.lines().map(|line| line.to_string().trim()[4..].trim_end_matches("/").to_string()).collect()
 }
 
-fn download(object_path: &str, output_path: &str) -> String {
+fn download(object_path: &str, output_path: &str) {
     let result = Command::new("aws")
         .args(&["s3", "cp", &["s3://", object_path].concat(), output_path, "--no-sign-request" ])
         .output()
@@ -107,7 +107,7 @@ fn build_truecolor_image(data_path: PathBuf, relative_out: &str) {
 }
 
 fn main() {
-    download(&most_recent_file_path("noaa-goes16/ABI-L2-MCMIPF"), "~/output/current.nc");
+    download(&most_recent_file_path("noaa-goes16/ABI-L2-MCMIPF"), "../output/current.nc");
     let mut output_path = PathBuf::new();
     output_path.push("~");
     output_path.push("output");
