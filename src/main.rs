@@ -84,9 +84,9 @@ fn extract_channel(file: &netcdf::File, channel_name: &str) -> Array2::<i16> {
 fn reproject(channel: &Array2::<i16>) -> Array2::<f32> {
     dbg!(channel.iter().max());
     let gamma = 2.2;
-    let exponent = 1 / gamma;
+    let exponent = 1.0 / gamma;
     let result = channel.map(|value| {
-        if value < 0.0 {
+        if value < 0 {
             0.0
         } else {
             (*value as f32 / 4096.0).powf(exponent)
