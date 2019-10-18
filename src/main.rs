@@ -121,7 +121,7 @@ fn build_truecolor_image(data_path: PathBuf, relative_out: &str) {
 fn main() {
     download(&most_recent_file_path("noaa-goes16/ABI-L2-MCMIPF"), "../output/current.nc");
     let mut output_path = PathBuf::new();
-    output_path.push("~");
+    output_path.push("..");
     output_path.push("output");
     output_path.push("current.nc");
     build_truecolor_image(output_path, "../output/current.jpg");
