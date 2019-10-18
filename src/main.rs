@@ -86,7 +86,7 @@ fn reproject(channel: &Array2::<i16>) -> Array2::<f32> {
     let gamma = 2.2;
     let exponent = 1.0 / gamma;
     let result = channel.map(|value| {
-        if value < 0 {
+        if *value < 0 {
             0.0
         } else {
             (*value as f32 / 4096.0).powf(exponent)
