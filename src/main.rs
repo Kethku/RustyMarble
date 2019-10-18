@@ -24,9 +24,10 @@ fn ls(path: &str) -> Vec<String> {
         .collect()
 }
 
-fn download(object_path: &str, output_path: &str) {
+fn download(object_path: &str, output_path: PathBuf) {
+    let output_path_string = output_path.to_str().expect("Invalid path");
     let result = Command::new("aws")
-        .args(&["s3", "cp", &["s3://", object_path].concat(), output_path, "--no-sign-request" ])
+        .args(&["s3", "cp", &["s3://", object_path].concat(), output_path_string, "--no-sign-request" ])
         .output().expect("aws download failed");
 
     dbg!(str::from_utf8(&result.stdout).expect("output didn't parse").to_string());
@@ -88,7 +89,13 @@ fn reproject(channel: &Array2::<i16>) -> Array2::<f32> {
 }
 
 fn prepare_channel(channel: Array2::<f32>) -> Array3::<u8> {
-    channel.insert_axis(Axis(2)).map(|value| (*value * 255.0).floor() as u8)
+    channel.insert_axis(Axis(2)).map(|value| {
+        if value < 0 {
+            0 as u8
+        } else {
+            (*value * 255.0).floor() as u8
+        }
+    })
 }
 
 fn data_to_image(arr: Array3<u8>) -> RgbImage {
@@ -119,10 +126,9 @@ fn build_truecolor_image(data_path: PathBuf, relative_out: &str) {
 }
 
 fn main() {
-    download(&most_recent_file_path("noaa-goes16/ABI-L2-MCMIPF"), "../output/current.nc");
     let mut output_path = PathBuf::new();
     output_path.push("..");
-    output_path.push("output");
     output_path.push("current.nc");
+    download(&most_recent_file_path("noaa-goes16/ABI-L2-MCMIPF"), output_path);
     build_truecolor_image(output_path, "../output/current.jpg");
 }
