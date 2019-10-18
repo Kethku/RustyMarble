@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process::Command;
 use std::str;
 
@@ -15,14 +15,19 @@ fn ls(path: &str) -> Vec<String> {
 
     let output = str::from_utf8(&result.stdout).expect("output didn't parse");
 
-    output.lines().map(|line| line.to_string().trim()[4..].trim_end_matches("/").to_string()).collect()
+    output
+        .lines()
+        .map(|line| line.to_string()
+                        .trim()[4..]
+                        .trim_end_matches("/")
+                        .to_string())
+        .collect()
 }
 
 fn download(object_path: &str, output_path: &str) {
     let result = Command::new("aws")
         .args(&["s3", "cp", &["s3://", object_path].concat(), output_path, "--no-sign-request" ])
-        .output()
-        .expect("aws download failed");
+        .output().expect("aws download failed");
 
     dbg!(str::from_utf8(&result.stdout).expect("output didn't parse").to_string());
 }
@@ -32,7 +37,11 @@ fn append_folder(path: &mut String, folder_name: String) {
 }
 
 fn biggest_folder(path: &str) -> String {
-    ls(path).iter().map(|folder| folder.parse::<i32>().expect("folder does not have number name")).max().unwrap().to_string()
+    ls(path)
+        .iter()
+        .map(|folder| folder.parse::<i32>().expect("folder does not have number name"))
+        .max().expect("no folders available")
+        .to_string()
 }
 
 fn newest_output_folder(product: &str) -> String {
@@ -54,17 +63,20 @@ fn newest_output_folder(product: &str) -> String {
 fn most_recent_file_path(product: &str) -> String {
     let mut newest_output = newest_output_folder(product);
     let files = ls(&newest_output);
-    let most_recent = files.last().unwrap();
+    let most_recent = files.last().expect("no files available");
 
     let info_parts = most_recent.split_whitespace();
 
-    append_folder(&mut newest_output, info_parts.last().unwrap().to_string());
+    append_folder(&mut newest_output, info_parts.last().expect("No split parts").to_string());
 
     newest_output
 }
 
 fn extract_channel(file: &netcdf::File, channel_name: &str) -> Array2::<i16> {
-    file.root().variables()[channel_name].values::<i16>(None, None).unwrap().into_dimensionality::<Ix2>().unwrap()
+    file.root()
+        .variables()[channel_name]
+        .values::<i16>(None, None).expect("Data not made of shorts")
+        .into_dimensionality::<Ix2>().expect("Data is not square")
 }
 
 fn reproject(channel: &Array2::<i16>) -> Array2::<f32> {
@@ -90,7 +102,7 @@ fn data_to_image(arr: Array3<u8>) -> RgbImage {
 }
 
 fn build_truecolor_image(data_path: PathBuf, relative_out: &str) {
-    let file = netcdf::File::open(&data_path).unwrap();
+    let file = netcdf::File::open(&data_path).expect("Could not open file");
     let r = reproject(&extract_channel(&file, "CMI_C02"));
     println!("reprojected r");
     let g = reproject(&extract_channel(&file, "CMI_C03"));
@@ -100,10 +112,10 @@ fn build_truecolor_image(data_path: PathBuf, relative_out: &str) {
     let corrected_g = 0.45 * r.clone() + 0.1 * g + 0.45 * b.clone();
     println!("corrected g");
 
-    let image_data = stack(Axis(2), &[prepare_channel(r).view(), prepare_channel(corrected_g).view(), prepare_channel(b).view()]).unwrap();
+    let image_data = stack(Axis(2), &[prepare_channel(r).view(), prepare_channel(corrected_g).view(), prepare_channel(b).view()]).expect("Could not build stack");
     println!("stacked channels");
     let image = data_to_image(image_data);
-    image.save(relative_out);
+    image.save(relative_out).expect("Could not save image");
 }
 
 fn main() {
