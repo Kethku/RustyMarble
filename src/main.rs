@@ -124,5 +124,5 @@ fn main() {
     output_path.push("~");
     output_path.push("output");
     output_path.push("current.nc");
-    build_truecolor_image(output_path, "~/output/current.jpg");
+    build_truecolor_image(output_path, "../output/current.jpg");
 }
