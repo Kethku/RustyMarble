@@ -25,7 +25,7 @@ fn ls(path: &str) -> Vec<String> {
         .collect()
 }
 
-fn download(object_path: &str, output_path: PathBuf) {
+fn download(object_path: &str, output_path: &PathBuf) {
     let output_path_string = output_path.to_str().expect("Invalid path");
     let result = Command::new("aws")
         .args(&["s3", "cp", &["s3://", object_path].concat(), output_path_string, "--no-sign-request" ])
@@ -109,8 +109,8 @@ fn data_to_image(arr: Array3<u8>) -> RgbImage {
         .expect("container should have the right size for the image dimensions")
 }
 
-fn build_truecolor_image(data_path: PathBuf, relative_out: &str) {
-    let file = netcdf::File::open(&data_path).expect("Could not open file");
+fn build_truecolor_image(data_path: &PathBuf, relative_out: &str) {
+    let file = netcdf::File::open(data_path).expect("Could not open file");
     let r = reproject(&extract_channel(&file, "CMI_C02"));
     println!("reprojected r");
     let g = reproject(&extract_channel(&file, "CMI_C03"));
@@ -127,16 +127,16 @@ fn build_truecolor_image(data_path: PathBuf, relative_out: &str) {
 }
 
 fn main() {
-    let mut old_recent = "";
+    let mut old_recent = "".to_owned();
     loop {
         let new_recent = most_recent_file_path("noaa-goes16/ABI-L2-MCMIPF");
         if old_recent != new_recent {
-            old_recent = &new_recent;
+            old_recent = new_recent;
             let mut output_path = PathBuf::new();
             output_path.push("..");
             output_path.push("current.nc");
-            download(old_recent, output_path);
-            build_truecolor_image(output_path, "../output/current.jpg");
+            download(&old_recent, &output_path);
+            build_truecolor_image(&output_path, "../output/current.jpg");
         }
 
         let one_minute = time::Duration::from_secs(60);
