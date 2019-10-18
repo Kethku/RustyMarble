@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 use std::process::Command;
 use std::str;
+use std::{thread, time};
 
 use image::RgbImage;
 use ndarray::{Array2, Ix2, Array3, Axis, stack};
@@ -126,9 +127,19 @@ fn build_truecolor_image(data_path: PathBuf, relative_out: &str) {
 }
 
 fn main() {
-    let mut output_path = PathBuf::new();
-    output_path.push("..");
-    output_path.push("current.nc");
-    download(&most_recent_file_path("noaa-goes16/ABI-L2-MCMIPF"), output_path);
-    build_truecolor_image(output_path, "../output/current.jpg");
+    let mut old_recent = "";
+    loop {
+        let new_recent = most_recent_file_path("noaa-goes16/ABI-L2-MCMIPF");
+        if old_recent != new_recent {
+            old_recent = &new_recent;
+            let mut output_path = PathBuf::new();
+            output_path.push("..");
+            output_path.push("current.nc");
+            download(old_recent, output_path);
+            build_truecolor_image(output_path, "../output/current.jpg");
+        }
+
+        let one_minute = time::Duration::from_secs(60);
+        thread::sleep(one_minute);
+    }
 }
