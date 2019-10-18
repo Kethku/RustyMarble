@@ -85,18 +85,18 @@ fn reproject(channel: &Array2::<i16>) -> Array2::<f32> {
     dbg!(channel.iter().max());
     let gamma = 2.2;
     let exponent = 1.0 / gamma;
-    let result = channel.map(|value| ((*value + 1) as f32 / 4096.0).powf(exponent));
+    let result = channel.map(|value| {
+        if value < 0 {
+            0.0
+        } else {
+            (*value as f32 / 4096.0).powf(exponent)
+        }
+    });
     result
 }
 
 fn prepare_channel(channel: Array2::<f32>) -> Array3::<u8> {
-    channel.insert_axis(Axis(2)).map(|value| {
-        if value < 0 {
-            0 as u8
-        } else {
-            (*value * 255.0).floor() as u8
-        }
-    })
+    channel.insert_axis(Axis(2)).map(|value| (*value * 255.0).floor() as u8)
 }
 
 fn data_to_image(arr: Array3<u8>) -> RgbImage {
