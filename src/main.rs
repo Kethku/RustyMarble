@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 use std::process::Command;
+use std::fs;
 use std::str;
 use std::{thread, time};
 
@@ -30,8 +31,6 @@ fn download(object_path: &str, output_path: &PathBuf) {
     let result = Command::new("aws")
         .args(&["s3", "cp", &["s3://", object_path].concat(), output_path_string, "--no-sign-request" ])
         .output().expect("aws download failed");
-
-    dbg!(str::from_utf8(&result.stdout).expect("output didn't parse").to_string());
 }
 
 fn append_folder(path: &mut String, folder_name: String) {
@@ -137,6 +136,10 @@ fn main() {
             output_path.push("current.nc");
             download(&old_recent, &output_path);
             build_truecolor_image(&output_path, "../output/current.jpg");
+            fs::remove_file(&output_path);
+            println!("Output successful!");
+        } else {
+            println!("No new data.");
         }
 
         let one_minute = time::Duration::from_secs(60);
