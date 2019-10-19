@@ -128,7 +128,7 @@ fn build_truecolor_image(data_path: &PathBuf, relative_out: &str) {
 fn main() {
     let mut old_recent = "".to_owned();
     loop {
-        let new_recent = most_recent_file_path("noaa-goes16/ABI-L2-MCMIPF");
+        let new_recent = most_recent_file_path("noaa-goes17/ABI-L2-MCMIPF");
         if old_recent != new_recent {
             old_recent = new_recent;
             let mut output_path = PathBuf::new();
