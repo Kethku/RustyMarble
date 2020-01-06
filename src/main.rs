@@ -40,8 +40,8 @@ fn append_folder(path: &mut String, folder_name: String) {
 fn biggest_folder(path: &str) -> String {
     ls(path)
         .iter()
-        .map(|folder| folder.parse::<i32>().expect("folder does not have number name"))
-        .max().expect("no folders available")
+        .max_by_key(|folder| folder.parse::<i32>().expect("folder does not have number name"))
+        .expect(&format!("No folders available for {}", path))
         .to_string()
 }
 
